@@ -72,38 +72,6 @@ function plate(obj) {
 	return promise_proxy(obj_promise);
 }
 
-
-function Mock(){
-        this.history = [];
-};
-Mock.prototype = {
-        asyncReturningSelf: function(cb) {
-                this.history.push('asyncReturningSelf');
-                var that=this;
-                setTimeout(function() {
-                        cb(null, that);
-                }, 25);
-        },
-        asyncReturningNew: function(cb) {
-                this.history.push('asyncReturningNew');
-                setTimeout(function() {
-                        cb(null, new Mock());
-                }, 25);
-        },
-        asyncReturningValue: function(value, timeout, cb) {
-                this.history.push('asyncReturningValue '+value);
-                setTimeout(function() {
-                        cb(null, value);
-                }, timeout);
-        },
-	asyncPrintingArg: function(value, cb) {
-		console.log("asyncPrintingArg");
-		console.log(value);
-		setTimeout(function() { cb(); }, 25);
-	},
-};
-
-
 function create_promise(target) {
 	return {
 		plate_: true,
@@ -127,6 +95,8 @@ function create_invocation_promise(receiver_promise, property, args) {
 		queue: receiver_promise.queue,
 		notifications: [],
 	};
+	if(receiver_promise.queue.locked)
+		throw new Error("Queue is locked! Did you already call end()?");
 	receiver_promise.queue.push({
 		receiver: receiver_promise,
 		property: property,
@@ -148,9 +118,10 @@ function satisfy_promise(promise, values) {
 }
 
 function process_queue(queue, error_handler) {
+	if(queue.locked)
+		return error_handler(new Error("Queue is locked. Did you call end() twice?");
+	queue.locked = true;
 	var head = queue.shift();
-//	console.log("Processing:");
-//	console.log(head);
 	if(!head)
 		return;
 	if(!head.receiver.value)
@@ -171,46 +142,10 @@ function process_queue(queue, error_handler) {
 		var args = Array.prototype.slice.apply(arguments);
 		args.shift(); // err
 		satisfy_promise(head.dest, args);
+		queue.locked=false;
 		return process_queue(queue, error_handler);
 	});
 	property.apply(head.receiver.value, args);
 }
-
-/*
-var m = new Mock();
-
-var pm = create_promise(m); // pm = plate(m);
-var t1 = create_invocation_promise(pm, 'asyncReturningNew', []); // var t1 = pm.asyncReturningNew()
-var t2 = create_invocation_promise(t1, 'asyncReturningSelf', []); // var t2 = t1.asyncReturningSelf()
-var t3 = create_invocation_promise(t2, 'asyncReturningSelf', []); // var t3 = t2.asyncReturningSelf()
-add_notification(t3, function(value) {
-	console.log("GOT t3 value");
-	console.log(value);
-});
-add_notification(t1, function(value) {
-	console.log("GOT t1 value");
-	console.log(value);
-});
-add_notification(pm, function(value) {
-	console.log("GOT pm value");
-	console.log(value);
-});
-process_queue(t2.queue, function(err) { 
-	console.log(err);
-	throw err; 
-}); // t3.end(function(err){})
-
-
-var m2 = new Mock();
-var pm2 = plate(m2);
-pm2
-.deliver(function(){console.log("pm2!")})
-.asyncReturningNew()
-.deliver(function(){console.log("t22");})
-.asyncReturningSelf()
-.asyncReturningSelf()
-.deliver(function(){console.log("t23");})
-.end();
-*/
 
 module.exports = plate;
