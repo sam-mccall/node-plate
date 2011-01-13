@@ -1,14 +1,8 @@
-= Plate =
+# Plate
 
 Plate lets you write less callbacks.
 
-== Work in progress! ==
-
-These examples show where it's going, not what it does currently!
-
-Currently, method chaining works, but the other stuff is coming. Also maybe some more flexible error handling rather than all errors at the end.
-
-== Introduction ==
+## Introduction 
 
 The convention in node.js is that an asynchronous library function takes a callback as its last parameter.
 When it finishes, it invokes this callback - the first parameter is the error, and the rest are the data.
@@ -42,15 +36,73 @@ Before:
     var thing = new Thing();
     thing.asyncOne(function(err, data) {
     	if(err) throw err;
-    	data.asyncTwo(function(err) {
+    	data.asyncTwo(function(err, result) {
     		if(err) throw err;
-    		console.log("Success");
+    		console.log("Success: "+result);
     	}
     }
 
 After:
     var pthing = plate(new Thing());
-    thing.asyncOne().asyncTwo().end(function(err) {
+    thing.asyncOne().asyncTwo().end(function(err, result) {
     	if(err) throw err;
-    	console.log("Success");
+    	console.log("Success: result");
     });
+
+## How it works
+
+The things returned by plate, and subsequent method calls, are basically promises. 
+
+Things will be done to the actual objects in the same order as you do things to the promises.
+
+If a function invoked on a promise takes another promise as a parameter, the value will be passed instead.
+
+## API
+
+### plate(obj)
+
+Returns: a promise for obj
+
+### promise.foo(args...)
+
+Adds promise.foo(args...) to the queue. Args can be promises (from the same queue), or any other values.
+
+The actual call made will be <promise>.foo(<args...>, cb) where <promise> is the value of promise, <args> is args with all promises evaluated, and cb is a node.js callback.
+
+Returns: a promise for the first return value (i.e. the second argument passed to cb).
+
+### promise.deliver(func)
+
+Registers a listener, when the value(s) for the promise is available, func will be called with the values as arguments.
+
+On error, func will not be called.
+
+Returns: promise (for chaining)
+
+### promise.end(cb)
+
+Starts the queue. This must only be done once per queue (i.e per call to plate()).
+
+Upon completion, cb will be called. If there was an error, it will be the first argument. 
+Otherwise the first argument is null, and the second argument is the value of this promise.
+
+Returns: undefined.
+
+## Limitations
+
+This works: 
+    var pthing = plate(new Thing());
+    var derivedValue = pthing.getValue();
+    pthing.doSomething(derivedValue); // passes the actual value, not the promise
+
+This can never work:
+    console.log(derivedValue); // passes the promise
+
+This doesn't either, but maybe one day:
+    var pconsole = plate(console); // each call to plate() creates an independent queue
+    pconsole.log(derivedValue);    // you can't mix promises from different queues
+
+This doesn't work but will real soon:
+    var pobj = plate({a:'a'});
+    pobj.a().end(function(err, value) { console.log(value); });
+    // note pobj.a() not .a - we can't tell in advance that it's a field not a function
