@@ -127,8 +127,11 @@ function process_queue(queue, error_handler) {
 	if(typeof(head.receiver.value[head.property]) == 'undefined')
 		return error_handler(new Error("Receiver doesn't have property "+head.property));
 	var property = head.receiver.value[head.property];
-	if(typeof(property) != 'function')
-		return error_handler(new Error("Receiver property is not a function"));
+	if(typeof(property) != 'function') {
+		satisfy_promise(head.dest, [property]);
+		queue.locked = false;
+		return process_queue(queue, error_handler);
+	}
 	var args = [];
 	head.args.forEach(function(x) { args.push(x.value); });
 	args.push(function(err) {
@@ -137,7 +140,7 @@ function process_queue(queue, error_handler) {
 		var args = Array.prototype.slice.apply(arguments);
 		args.shift(); // err
 		satisfy_promise(head.dest, args);
-		queue.locked=false;
+		queue.locked = false;
 		return process_queue(queue, error_handler);
 	});
 	property.apply(head.receiver.value, args);

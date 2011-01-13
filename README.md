@@ -69,6 +69,8 @@ Adds promise.foo(args...) to the queue. Args can be promises (from the same queu
 
 The actual call made will be &lt;promise>;.foo(&lt;args...>, cb) where &lt;promise> is the value of promise, &lt;args> is args with all promises evaluated, and cb is a node-style callback.
 
+If &lt;promise.foo> is defined but is not a function, it will be treated as a simple accessor that returns that value.
+
 If you pass an error to cb, further execution will be skipped and the error will be handled.
 
 Returns: a promise for the first return value (i.e. the second argument passed to cb).
@@ -103,8 +105,3 @@ This can never work:
 This doesn't either, but maybe one day:
     var pconsole = plate(console); // each call to plate() creates an independent queue
     pconsole.log(derivedValue);    // you can't mix promises from different queues
-
-This doesn't work but will real soon:
-    var pobj = plate({a:'a'});
-    pobj.a().end(function(err, value) { console.log(value); });
-    // note pobj.a() not .a - we can't tell in advance that it's a field not a function
