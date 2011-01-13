@@ -33,7 +33,6 @@ var plate_handler = function(target) {
 			console.log("fix: "+arguments);
 		},
 		getOwnPropertyDescriptor: function(property) {
-			console.log("getOwnPropertyDescriptor: "+JSON.stringify(arguments));
 			if(typeof(properties[property]) != 'undefined') {
 				return {
 					value: properties[property],
@@ -57,9 +56,6 @@ var plate_handler = function(target) {
 			return {
 				value: value,
 			};
-		},
-		getPropertyDescriptor: function() {
-			console.log("getPropertyDescriptor: "+JSON.stringify(arguments));		
 		},
 		getOwnPropertyNames: function() {
 			console.log("getOwnPropertyNames: "+arguments);				
