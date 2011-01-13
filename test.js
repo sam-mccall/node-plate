@@ -1,5 +1,5 @@
 var assert = require('assert');
-var plate = require (__dirname+'/plate2');
+var plate = require (__dirname+'/plate');
 
 function Mock(){
 	this.history = [];
