@@ -119,7 +119,7 @@ function satisfy_promise(promise, values) {
 
 function process_queue(queue, error_handler) {
 	if(queue.locked)
-		return error_handler(new Error("Queue is locked. Did you call end() twice?");
+		return error_handler(new Error("Queue is locked. Did you call end() twice?"));
 	queue.locked = true;
 	var head = queue.shift();
 	if(!head)
