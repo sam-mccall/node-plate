@@ -69,7 +69,7 @@ Adds promise.foo(args...) to the queue. Args can be promises (from the same queu
 
 The actual call made will be &lt;promise>;.foo(&lt;args...>, cb) where &lt;promise> is the value of promise, &lt;args> is args with all promises evaluated, and cb is a node-style callback.
 
-If &lt;promise.foo> is defined but is not a function, it will be treated as a simple accessor that returns that value.
+If &lt;promise>.foo is defined but is not a function, it will be treated as a simple accessor that returns that value.
 
 If you pass an error to cb, further execution will be skipped and the error will be handled.
 
