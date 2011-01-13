@@ -48,6 +48,10 @@ function promise_proxy(promise) {
 			plate_promise__: promise,
 		},
 		createProperty: function(property) {
+			if(property.substr(-1) == '$') {
+				property = property.substr(0, property.length-1);
+				var sync = true;
+			}
 			return function() {
 				var args = [];
 				Array.prototype.forEach.call(arguments, function(arg) {
@@ -55,7 +59,7 @@ function promise_proxy(promise) {
 						arg = arg.plate_promise__;
 					args.push(arg);
 				});
-				var invoc_promise = create_invocation_promise(promise, property, args);
+				var invoc_promise = create_invocation_promise(promise, property, args, sync);
 				return promise_proxy(invoc_promise);
 			};
 		},
@@ -76,7 +80,7 @@ function create_promise(target) {
 	};
 }
 
-function create_invocation_promise(receiver_promise, property, args) {
+function create_invocation_promise(receiver_promise, property, args, sync) {
 	var argument_promises = [];
 	args.forEach(function(arg) {
 		if(!arg || typeof(arg) != 'object' || !arg.plate_) // literal
@@ -97,6 +101,7 @@ function create_invocation_promise(receiver_promise, property, args) {
 		property: property,
 		args: argument_promises,
 		dest: this_promise,
+		sync: sync,
 	});
 	return this_promise;
 };
@@ -134,16 +139,27 @@ function process_queue(queue, error_handler) {
 	}
 	var args = [];
 	head.args.forEach(function(x) { args.push(x.value); });
-	args.push(function(err) {
-		if(err)
-			return error_handler(err);
-		var args = Array.prototype.slice.apply(arguments);
-		args.shift(); // err
-		satisfy_promise(head.dest, args);
+	if(head.sync) {
+		try {
+			var result = property.apply(head.receiver.value, args);
+		} catch (x) {
+			return error_handler(x);
+		}
+		satisfy_promise(head.dest, [result]);
 		queue.locked = false;
 		return process_queue(queue, error_handler);
-	});
-	property.apply(head.receiver.value, args);
+	} else {
+		args.push(function(err) {
+			if(err)
+				return error_handler(err);
+			var args = Array.prototype.slice.apply(arguments);
+			args.shift(); // err
+			satisfy_promise(head.dest, args);
+			queue.locked = false;
+			return process_queue(queue, error_handler);
+		});
+		property.apply(head.receiver.value, args);
+	}
 }
 
 module.exports = plate;

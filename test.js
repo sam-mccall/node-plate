@@ -31,6 +31,10 @@ Mock.prototype = {
 			cb(null, result);
 		}, 25);
 	},
+	syncReturningSelf: function(cb) {
+		this.history.push('syncReturningSelf');
+		return this;
+	},
 };
 
 exports.simple = function() {
@@ -132,6 +136,19 @@ exports.property = function() {
 	var m = new Mock();
 	var pm = plate(m);
 	pm.asyncReturningObjectContainingSelf().value().asyncReturningSelf().end(function(err,x) {
+		clearTimeout(t1);
+		assert.equal(err, null);
+		assert.equal(x, m);
+	});
+};
+
+exports.sync = function() {
+	// normal omitted
+
+	var t1 = setTimeout(function(){ assert.fail("sync: Didn't get to end"); }, 100);
+	var m = new Mock();
+	var pm = plate(m);
+	pm.asyncReturningSelf().syncReturningSelf$().asyncReturningSelf().end(function(err,x) {
 		clearTimeout(t1);
 		assert.equal(err, null);
 		assert.equal(x, m);

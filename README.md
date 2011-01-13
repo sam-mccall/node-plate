@@ -65,7 +65,7 @@ Returns: a promise for obj
 
 ### promise.foo(args...)
 
-Adds promise.foo(args...) to the queue. Args can be promises (from the same queue), or any other values.
+Adds promise.foo(args...) to the queue as an asynchronous call. Args can be promises (from the same queue), or any other values.
 
 The actual call made will be &lt;promise>.foo(&lt;args...>, cb) where &lt;promise> is the value of promise, &lt;args> is args with all promises evaluated, and cb is a node-style callback.
 
@@ -74,6 +74,18 @@ If &lt;promise>.foo is defined but is not a function, it will be treated as a si
 If you pass an error to cb, further execution will be skipped and the error will be handled.
 
 Returns: a promise for the first return value (i.e. the second argument passed to cb).
+
+### promise.foo$(args...)
+
+Adds promise.foo(args...) to the queue as a synchronous call. Args can be promises (from the same queue), or any other values.
+
+The actual call made will be &lt;promise>.foo(&lt;args...>) where &lt;promise> is the value of promise, and &lt;args> is args with all promises evaluated.
+
+If &lt;promise>.foo is defined but is not a function, it will be treated as a simple accessor that returns that value.
+
+If the function throws an error, further execution will be skipped and the error will be handled.
+
+Returns: a promise for the return value of the call.
 
 ### promise.deliver(func)
 
