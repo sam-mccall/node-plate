@@ -67,7 +67,9 @@ Returns: a promise for obj
 
 Adds promise.foo(args...) to the queue. Args can be promises (from the same queue), or any other values.
 
-The actual call made will be <promise>.foo(<args...>, cb) where <promise> is the value of promise, <args> is args with all promises evaluated, and cb is a node.js callback.
+The actual call made will be &lt;promise>;.foo(&lt;args...>, cb) where &lt;promise> is the value of promise, &lt;args> is args with all promises evaluated, and cb is a node-style callback.
+
+If you pass an error to cb, further execution will be skipped and the error will be handled.
 
 Returns: a promise for the first return value (i.e. the second argument passed to cb).
 
@@ -75,7 +77,7 @@ Returns: a promise for the first return value (i.e. the second argument passed t
 
 Registers a listener, when the value(s) for the promise is available, func will be called with the values as arguments.
 
-On error, func will not be called.
+Func will not be called if the promise doesn't get a value because an earlier invocation raises an error.
 
 Returns: promise (for chaining)
 
