@@ -3,13 +3,10 @@ var proxy = require('node-proxy');
 var buildProxyHandler = function(handler) {
 	return {
 		enumerate: function() {
-			console.error("enumerate: "+JSON.stringify(arguments));
 		},
 		delete: function() {
-			console.error("delete: "+JSON.stringify(arguments));
 		},
 		fix: function() {
-			console.error("fix: "+JSON.stringify(arguments));
 		},
 		getOwnPropertyDescriptor: function(property) {
 			if(handler.properties && handler.properties.hasOwnProperty(property))
@@ -20,10 +17,8 @@ var buildProxyHandler = function(handler) {
 			return { value: result };
 		},
 		getOwnPropertyNames: function() {
-			console.error("getOwnPropertynames: "+JSON.stringify(arguments));
 		},
 		getPropertyNames: function() {
-			console.error("getPropertynames: "+JSON.stringify(arguments));
 		},
 	};
 };
@@ -128,12 +123,12 @@ function process_queue(queue, error_handler) {
 		if(head.receiver.pending_values)
 			satisfy_promise(head.receiver, head.receiver.pending_values);
 		else
-			return error_handler("Receiver is null");
+			return error_handler(new Error("Receiver is null"));
 	if(typeof(head.receiver.value[head.property]) == 'undefined')
-		return error_handler("Receiver doesn't have property "+head.property);
+		return error_handler(new Error("Receiver doesn't have property "+head.property));
 	var property = head.receiver.value[head.property];
 	if(typeof(property) != 'function')
-		return error_handler("Receiver property is not a function");
+		return error_handler(new Error("Receiver property is not a function"));
 	var args = [];
 	head.args.forEach(function(x) { args.push(x.value); });
 	args.push(function(err) {
